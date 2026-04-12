@@ -43,6 +43,7 @@ class Settings(BaseSettings):
     environment: str = "development"
     log_level: str = "INFO"
     max_agent_iterations: int = 10
+    model_risk_tier: str = "Tier_2"
 
     # Circuit breaker (Phase 3 uses these thresholds)
     circuit_breaker_failure_threshold: int = 5
