@@ -6,111 +6,285 @@ SR 11-7 Relevance: Pillar 1 (Development) + Pillar 3 (Governance) —
     workflow. Every node increments state_version and records
     created_by to establish an immutable audit lineage.
 Owner: ESG Auditor Dev Team
-Last Modified: 2026-04-11
+Last Modified: 2026-04-12
 """
 
-from langchain_core.messages import AIMessage, HumanMessage
+import logging
+import os
+from functools import partial
+
+from langchain_anthropic import ChatAnthropic
+from langchain_core.messages import (
+    AIMessage,
+    HumanMessage,
+    SystemMessage,
+)
+from langchain_core.tools import tool as tool_decorator
 from langgraph.checkpoint.memory import InMemorySaver
 from langgraph.graph import END, START, StateGraph
 from langgraph.graph.state import CompiledStateGraph
+from langgraph.prebuilt import ToolNode
 
+from esg_auditor.agents.analyst_agent import run_analyst
+from esg_auditor.agents.client_agent import (
+    generate_client_profile,
+)
+from esg_auditor.agents.prompts import ADVISOR_SYSTEM_PROMPT
+from esg_auditor.config import Settings, get_settings
 from esg_auditor.core.state import AgentState
 
+logger = logging.getLogger(__name__)
 
-def _placeholder_advisor(state: AgentState) -> dict:
-    """Placeholder advisor node.
+
+def _get_advisor_tools(settings: Settings) -> list:
+    """Construct @tool wrappers with settings injected.
+
+    Uses closures to inject settings into the Analyst and
+    Client agent calls so the Advisor graph does not need
+    module-level singletons.
+
+    Args:
+        settings: Application settings for LLM credentials.
+
+    Returns:
+        List of two tool-decorated functions.
+    """
+
+    @tool_decorator
+    def consult_analyst(research_query: str) -> str:
+        """Delegate ESG research to the Analyst agent.
+
+        The Analyst has access to: Marketaux news sentiment,
+        SEC EDGAR filings, Finnhub ESG scores, yfinance
+        sustainability data, FinBERT NLP classification,
+        and the regulatory knowledge base. Always call this
+        before forming an ESG opinion.
+
+        Args:
+            research_query: Specific research question.
+
+        Returns:
+            Analyst's findings as a formatted string.
+        """
+        return run_analyst(research_query, settings)
+
+    @tool_decorator
+    def get_client_profile(
+        client_description: str,
+    ) -> str:
+        """Generate a structured investor profile.
+
+        Returns age, risk tolerance, total assets, current
+        holdings, and investment horizon as a JSON string.
+
+        Args:
+            client_description: Description of the client.
+
+        Returns:
+            ClientProfile JSON string.
+        """
+        return generate_client_profile(
+            client_description, settings
+        )
+
+    return [consult_analyst, get_client_profile]
+
+
+def _build_advisor_model(
+    settings: Settings, tools: list
+) -> ChatAnthropic:
+    """Construct and bind the advisor LLM.
+
+    Called once inside build_graph(). No module-level LLM.
+
+    Args:
+        settings: Application settings with LLM credentials.
+        tools: List of tools to bind to the model.
+
+    Returns:
+        ChatAnthropic with tools bound.
+    """
+    llm = ChatAnthropic(
+        model=settings.default_model,
+        max_tokens=settings.max_tokens,
+        temperature=0,
+        api_key=settings.anthropic_api_key,
+    )
+    return llm.bind_tools(tools)
+
+
+def _advisor_node(
+    state: AgentState,
+    *,
+    advisor_model: ChatAnthropic,
+    max_iterations: int,
+) -> dict:
+    """Advisor node — the only LLM-backed node in the graph.
+
+    Checks iteration guard first, then invokes the advisor
+    model with the full message history.
 
     SR 11-7 Pillar 3: increments state_version and records
-    created_by on every transition, establishing the immutable
-    audit lineage.
+    created_by on every transition.
+
+    Args:
+        state: Current graph state.
+        advisor_model: Bound ChatAnthropic instance.
+        max_iterations: Maximum allowed iterations.
+
+    Returns:
+        State update dict.
     """
+    current_iter = state["iteration_count"]
+
+    if current_iter >= max_iterations:
+        logger.warning(
+            "Advisor reached iteration limit (%d). "
+            "Returning safe shutdown.",
+            max_iterations,
+        )
+        return {
+            "messages": [
+                AIMessage(
+                    content=(
+                        "Maximum iteration limit reached. "
+                        "Returning the analysis collected "
+                        "so far. Please review the findings "
+                        "above for completeness."
+                    )
+                )
+            ],
+            "current_agent": "advisor",
+            "state_version": state["state_version"] + 1,
+            "created_by": "advisor",
+            "executed_agents": (
+                state["executed_agents"] + ["advisor"]
+            ),
+            "iteration_count": current_iter + 1,
+        }
+
+    messages = [
+        SystemMessage(content=ADVISOR_SYSTEM_PROMPT),
+        *state["messages"],
+    ]
+
+    response = advisor_model.invoke(messages)
+
     return {
-        "messages": [AIMessage(content="[Advisor placeholder]")],
+        "messages": [response],
         "current_agent": "advisor",
         "state_version": state["state_version"] + 1,
         "created_by": "advisor",
         "executed_agents": (
             state["executed_agents"] + ["advisor"]
         ),
-        "iteration_count": state["iteration_count"] + 1,
+        "iteration_count": current_iter + 1,
     }
 
 
-def _placeholder_analyst(state: AgentState) -> dict:
-    """Placeholder analyst node.
+def _should_continue(
+    state: AgentState,
+    *,
+    max_iterations: int,
+) -> str:
+    """Route based on tool calls in last message.
 
-    SR 11-7 Pillar 3: increments state_version and records
-    created_by on every transition, establishing the immutable
-    audit lineage.
+    Returns "tools" if the last message has tool_calls,
+    END otherwise. Also returns END if iteration limit
+    is reached.
+
+    Args:
+        state: Current graph state.
+        max_iterations: Maximum allowed iterations.
+
+    Returns:
+        "tools" or END.
     """
-    return {
-        "messages": [AIMessage(content="[Analyst placeholder]")],
-        "current_agent": "analyst",
-        "state_version": state["state_version"] + 1,
-        "created_by": "analyst",
-        "executed_agents": (
-            state["executed_agents"] + ["analyst"]
-        ),
-        "iteration_count": state["iteration_count"] + 1,
-    }
+    if state["iteration_count"] >= max_iterations:
+        return END
 
-
-def _placeholder_client(state: AgentState) -> dict:
-    """Placeholder client node.
-
-    SR 11-7 Pillar 3: increments state_version and records
-    created_by on every transition, establishing the immutable
-    audit lineage.
-    """
-    return {
-        "messages": [AIMessage(content="[Client placeholder]")],
-        "current_agent": "client",
-        "state_version": state["state_version"] + 1,
-        "created_by": "client",
-        "executed_agents": (
-            state["executed_agents"] + ["client"]
-        ),
-        "iteration_count": state["iteration_count"] + 1,
-    }
-
-
-def _should_continue(state: AgentState) -> str:
-    """Route to END unconditionally.
-
-    Phase 3 replaces this with real tool-call routing logic.
-    """
+    last_message = state["messages"][-1]
+    if (
+        isinstance(last_message, AIMessage)
+        and last_message.tool_calls
+    ):
+        return "tools"
     return END
 
 
-def build_graph() -> CompiledStateGraph:
-    """Assemble and compile the LangGraph StateGraph.
+def _compensate_workflow(state: AgentState) -> None:
+    """Walk executed_agents in reverse for saga rollback.
 
-    Factory function — the compiled graph is NOT stored at module
-    level. Call this function each time you need a fresh graph
-    instance (e.g. per-request or per-test).
+    Phase 3 stub: logs intent for each agent. Full
+    side-effect rollback will be added per agent as
+    they gain stateful operations.
+
+    Args:
+        state: Current graph state with executed_agents.
+    """
+    agents = state.get("executed_agents", [])
+    for agent_name in reversed(agents):
+        logger.info(
+            "Saga compensation: rolling back '%s'.",
+            agent_name,
+        )
+
+
+def build_graph(
+    settings: Settings | None = None,
+) -> CompiledStateGraph:
+    """Assemble and compile the full LangGraph StateGraph.
+
+    Factory function — constructs LLM, tools, and graph
+    fresh each call. No module-level singletons.
+
+    Args:
+        settings: Optional settings override. Uses
+            get_settings() if None.
 
     Returns:
         A compiled LangGraph graph ready to invoke.
     """
+    if settings is None:
+        settings = get_settings()
+
+    advisor_tools = _get_advisor_tools(settings)
+    advisor_model = _build_advisor_model(
+        settings, advisor_tools
+    )
+    max_iterations = settings.max_agent_iterations
+
     workflow = StateGraph(AgentState)
 
     # Add nodes
-    workflow.add_node("advisor", _placeholder_advisor)
-    workflow.add_node("analyst", _placeholder_analyst)
-    workflow.add_node("client", _placeholder_client)
+    workflow.add_node(
+        "advisor",
+        partial(
+            _advisor_node,
+            advisor_model=advisor_model,
+            max_iterations=max_iterations,
+        ),
+    )
+    workflow.add_node("tools", ToolNode(advisor_tools))
 
-    # Wire edges - Phase 1: START -> advisor -> END
+    # Wire edges
     workflow.add_edge(START, "advisor")
     workflow.add_conditional_edges(
-        "advisor", _should_continue, {END: END}
+        "advisor",
+        partial(
+            _should_continue,
+            max_iterations=max_iterations,
+        ),
+        {"tools": "tools", END: END},
     )
+    workflow.add_edge("tools", "advisor")
 
     checkpointer = InMemorySaver()
     return workflow.compile(checkpointer=checkpointer)
 
 
 def make_initial_state(user_message: str) -> AgentState:
-    """Create a zeroed AgentState for a new conversation thread.
+    """Create a zeroed AgentState for a new conversation.
 
     Args:
         user_message: The initial user query to seed the
@@ -131,4 +305,31 @@ def make_initial_state(user_message: str) -> AgentState:
         audit_request={},
         research_results={},
         esg_report={},
+    )
+
+
+def configure_tracing(settings: Settings) -> None:
+    """Configure LangSmith tracing from settings.
+
+    Called ONCE at application startup from app.py.
+    This is the ONLY function that touches os.environ
+    in the agents package.
+
+    Args:
+        settings: Application settings with tracing config.
+    """
+    os.environ["LANGCHAIN_TRACING_V2"] = (
+        settings.langchain_tracing_v2
+    )
+    if settings.langsmith_api_key:
+        os.environ["LANGSMITH_API_KEY"] = (
+            settings.langsmith_api_key
+        )
+    if settings.langsmith_project:
+        os.environ["LANGSMITH_PROJECT"] = (
+            settings.langsmith_project
+        )
+    logger.info(
+        "LangSmith tracing configured: %s",
+        settings.langchain_tracing_v2,
     )
