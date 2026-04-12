@@ -1,0 +1,21 @@
+name: Keep Alive
+
+on:
+  schedule:
+    - cron: "0 */12 * * *"
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ping HF Space
+        run: |
+          curl -s \
+            https://${{ vars.HF_USERNAME }}-${{ vars.SPACE_NAME }}.hf.space/ \
+            > /dev/null && echo "Space alive" || echo "Space unreachable"
+
+      - name: Qdrant health check
+        run: |
+          curl -sf "${{ secrets.QDRANT_URL }}/healthz" \
+            -H "api-key: ${{ secrets.QDRANT_API_KEY }}" \
+            > /dev/null && echo "Qdrant alive" || echo "Qdrant unreachable"
