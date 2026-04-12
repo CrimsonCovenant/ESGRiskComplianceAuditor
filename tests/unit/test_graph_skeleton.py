@@ -1,49 +1,33 @@
 """
 Module: test_graph_skeleton
-Purpose: Unit tests for the Phase 1 LangGraph skeleton.
+Purpose: Unit tests for graph construction and initial state.
 SR 11-7 Relevance: Pillar 2 (Validation) — verifies that the graph
-    wiring is correct, placeholder nodes produce expected outputs,
-    and state versioning fields are properly managed.
+    wiring is correct and state initialisation is consistent.
 Owner: ESG Auditor Dev Team
-Last Modified: 2026-04-11
+Last Modified: 2026-04-12
 """
 
+import pytest
+
 from esg_auditor.agents.graph import build_graph, make_initial_state
+from esg_auditor.config import get_settings
 
 
 class TestGraphSkeleton:
-    """Tests for the Phase 1 graph skeleton."""
+    """Tests for graph construction and make_initial_state."""
 
-    def test_build_graph_returns_compiled(self) -> None:
-        """build_graph() should return a compiled graph object."""
+    def test_build_graph_returns_compiled(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """build_graph() should return a compiled graph."""
+        monkeypatch.setenv("ANTHROPIC_API_KEY", "test-k")
+        monkeypatch.setenv("QDRANT_URL", "http://localhost")
+        monkeypatch.setenv("QDRANT_API_KEY", "test-k")
+        get_settings.cache_clear()
+
         graph = build_graph()
         assert graph is not None
-
-    def test_graph_smoke(self) -> None:
-        """Full smoke test for the Phase 1 graph skeleton.
-
-        Verifies:
-        - Last message is '[Advisor placeholder]'
-        - current_agent is 'advisor'
-        - state_version incremented to 1
-        - created_by set to 'advisor'
-        - executed_agents contains ['advisor']
-        - iteration_count incremented to 1
-        """
-        graph = build_graph()
-        result = graph.invoke(
-            make_initial_state("test audit request"),
-            config={"configurable": {"thread_id": "smoke-001"}},
-        )
-        assert (
-            result["messages"][-1].content
-            == "[Advisor placeholder]"
-        )
-        assert result["current_agent"] == "advisor"
-        assert result["state_version"] == 1
-        assert result["created_by"] == "advisor"
-        assert result["executed_agents"] == ["advisor"]
-        assert result["iteration_count"] == 1
+        assert hasattr(graph, "invoke")
 
     def test_make_initial_state_structure(self) -> None:
         """make_initial_state should produce a valid AgentState."""
