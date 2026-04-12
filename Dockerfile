@@ -21,13 +21,14 @@ ENV STREAMLIT_SERVER_PORT=7860 \
     STREAMLIT_BROWSER_GATHER_USAGE_STATS=false \
     HF_HOME=/tmp/hf_cache \
     TRANSFORMERS_CACHE=/tmp/hf_cache/transformers \
-    XDG_CACHE_HOME=/tmp/cache
+    XDG_CACHE_HOME=/tmp/cache \
+    PYTHONPATH=/home/user/app/src
 
 EXPOSE 7860
 
 HEALTHCHECK CMD curl --fail http://localhost:7860/_stcore/health || exit 1
 
 CMD ["streamlit", "run", "src/esg_auditor/app.py", \
-     "--server.port=7860", \
-     "--server.address=0.0.0.0", \
-     "--server.headless=true"]
+    "--server.port=7860", \
+    "--server.address=0.0.0.0", \
+    "--server.headless=true"]
