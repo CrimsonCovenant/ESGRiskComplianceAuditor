@@ -1,0 +1,49 @@
+{
+  "questions": [
+    {
+      "id": "esg-qa-001",
+      "question": "What does SR 11-7 require for model risk management?",
+      "ground_truth": "SR 11-7 requires three pillars of model risk management: Pillar 1 covers model development and implementation, requiring sound theory, robust data, and rigorous testing with comprehensive documentation. Pillar 2 mandates model validation by independent qualified staff, including conceptual soundness evaluation, ongoing monitoring, and outcomes analysis. Pillar 3 establishes governance, policies, and controls with clear roles, a comprehensive model inventory, and internal audit oversight.",
+      "contexts": [
+        "SR 11-7: Guidance on Model Risk Management establishes supervisory guidance organised around three pillars. Pillar 1 (Model Development and Implementation) requires that models be developed with sound theory, robust data, and rigorous testing. Pillar 2 (Model Validation) mandates evaluation of conceptual soundness, ongoing monitoring, and outcomes analysis by qualified independent staff. Pillar 3 (Model Governance) requires governance frameworks with clear roles, model inventory, and internal audit."
+      ],
+      "category": "regulatory"
+    },
+    {
+      "id": "esg-qa-002",
+      "question": "What are the four core disclosure pillars of the TCFD framework?",
+      "ground_truth": "The TCFD framework is structured around four core disclosure pillars: (1) Governance — covering board oversight and management's role in assessing climate risks; (2) Strategy — addressing actual and potential impacts of climate risks on business and financial planning; (3) Risk Management — describing processes for identifying, assessing, and managing climate-related risks; and (4) Metrics and Targets — including Scope 1, 2, and 3 greenhouse gas emissions alongside climate-related targets.",
+      "contexts": [
+        "The Task Force on Climate-related Financial Disclosures recommendations are structured around four thematic areas: Governance (board oversight of climate risks), Strategy (impacts on businesses and financial planning), Risk Management (processes for identifying and managing climate risks), and Metrics and Targets (Scope 1, Scope 2, and Scope 3 greenhouse gas emissions and related targets)."
+      ],
+      "category": "regulatory"
+    },
+    {
+      "id": "esg-qa-003",
+      "question": "What does the SEC climate disclosure rule require for large accelerated filers?",
+      "ground_truth": "The SEC climate disclosure final rule (Release No. 33-11275, adopted March 6, 2024) requires large accelerated filers to disclose material Scope 1 and Scope 2 greenhouse gas emissions in gross terms without purchased offsets. Large accelerated filers must obtain limited assurance beginning in fiscal years starting 2029, transitioning to reasonable assurance in fiscal years starting 2033. All registrants must also describe their governance of climate risks, material physical and transition risks, and material aspects of any transition plan.",
+      "contexts": [
+        "The SEC final climate-related disclosure rule requires large accelerated filers to disclose Scope 1 and Scope 2 greenhouse gas emissions when material, reported in gross terms without purchased offsets. Limited assurance is required beginning fiscal years starting 2029, transitioning to reasonable assurance in 2033. All registrants must describe governance of climate risks, including board oversight and management's role, and describe material physical and transition risks."
+      ],
+      "category": "regulatory"
+    },
+    {
+      "id": "esg-qa-004",
+      "question": "What are the capabilities and limitations of FinBERT for ESG text classification?",
+      "ground_truth": "FinBERT is a domain-adapted BERT model pre-trained on financial text. For ESG classification, the ProsusAI/finbert model provides sentiment analysis (positive, negative, neutral) while yiyanghkust/finbert-esg provides ESG category classification. FinBERT has a 512-token context limit, requires 15-30 seconds of cold start time on first inference, and its training data has a temporal cutoff meaning it may not reflect the latest regulatory terminology. It performs best on English financial text and may produce lower-quality results on non-financial or multilingual inputs.",
+      "contexts": [
+        "FinBERT (ProsusAI/finbert) provides financial sentiment analysis classifying text as positive, negative, or neutral. The ESG variant (yiyanghkust/finbert-esg) classifies text into ESG categories. Both models have a 512-token context window and experience 15-30 second cold start on first inference, mitigated by lru_cache. Training data has a temporal cutoff and models perform best on English financial text."
+      ],
+      "category": "technical"
+    },
+    {
+      "id": "esg-qa-005",
+      "question": "How should ESG scores be interpreted and what data quality caveats apply?",
+      "ground_truth": "ESG scores are composite metrics summarising a company's environmental, social, and governance performance on a 0-100 scale. Scores above 70 are generally considered strong, 40-70 moderate, and below 40 weak. Key data quality caveats include: scores vary significantly across rating providers due to different methodologies and weightings; yfinance sustainability data may be stale as the last Sustainalytics update timing is unclear; self-reported corporate data has inherent bias; and scores are backward-looking metrics that may not reflect current practices. All ESG assessments should be treated as advisory and supplemented with human expert review.",
+      "contexts": [
+        "ESG scores are composite metrics on a 0-100 scale where above 70 is strong, 40-70 is moderate, and below 40 is weak. Scores vary across providers due to different methodologies. Data quality caveats include: yfinance sustainability data may be stale, corporate self-reporting has inherent bias, scores are backward-looking, and provider methodologies differ. All output is advisory only and requires human review before action."
+      ],
+      "category": "domain"
+    }
+  ]
+}

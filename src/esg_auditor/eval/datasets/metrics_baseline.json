@@ -1,0 +1,67 @@
+{
+  "generated_at": "2026-04-12T23:48:26.520117+00:00",
+  "finbert": {
+    "accuracy": 0.9717,
+    "macro_f1": 0.9625,
+    "weighted_f1": 0.972,
+    "macro_pr_auc": 0.9921,
+    "macro_roc_auc": 0.9951,
+    "log_loss": 0.1462,
+    "per_class": {
+      "negative": {
+        "precision": 0.9057750759878419,
+        "recall": 0.9834983498349835,
+        "f1": 0.9430379746835443,
+        "support": 303,
+        "pr_auc": 0.9874,
+        "roc_auc": 0.9946,
+        "brier": 0.0131
+      },
+      "neutral": {
+        "precision": 0.9985152190051967,
+        "recall": 0.9669302659956865,
+        "f1": 0.9824689554419284,
+        "support": 1391,
+        "pr_auc": 0.999,
+        "roc_auc": 0.9981,
+        "brier": 0.0239
+      },
+      "positive": {
+        "precision": 0.9472789115646258,
+        "recall": 0.9771929824561404,
+        "f1": 0.9620034542314335,
+        "support": 570,
+        "pr_auc": 0.9899,
+        "roc_auc": 0.9927,
+        "brier": 0.0161
+      }
+    },
+    "bootstrap_ci_95": {
+      "accuracy": [
+        0.9642,
+        0.9784
+      ],
+      "macro_f1": [
+        0.9526,
+        0.9713
+      ]
+    },
+    "sample_size": 2264,
+    "dataset": "financial_phrasebank/sentences_allagree"
+  },
+  "ragas": {
+    "faithfulness": 0.7567,
+    "context_precision": 1.0,
+    "context_recall": 0.8048
+  },
+  "latency_ms": {
+    "p50_ms": 72183.1,
+    "p95_ms": 79637.1,
+    "p99_ms": 81006.6,
+    "mean_ms": 72414.8,
+    "min_ms": 67591.1,
+    "max_ms": 81349.0,
+    "n_runs": 5,
+    "query": "What is the ESG risk level for Apple (AAPL)? Answer in one sentence only."
+  }
+}
