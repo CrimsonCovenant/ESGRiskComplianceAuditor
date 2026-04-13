@@ -11,9 +11,6 @@ pinned: false
 short_description: SR 11-7 compliant multi-agent ESG portfolio auditor
 ---
 
-# ESGRiskComplianceAuditor
-
-
 # ESG Risk Compliance Auditor
 ### Multi-Agent AI System — SR 11-7 Compliant
 
