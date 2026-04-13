@@ -40,6 +40,11 @@ def build_audit_entry(
         "executed_agents": result.get(
             "executed_agents", []
         ),
+        "unique_agents": list(
+            dict.fromkeys(
+                result.get("executed_agents", [])
+            )
+        ),
         "iteration_count": result.get(
             "iteration_count", 0
         ),
@@ -61,7 +66,7 @@ def render_audit_trail(
     Args:
         audit_log: List of audit entry dicts from the session.
     """
-    st.header("🔍 Audit Trail")
+    st.header("\U0001f50d Audit Trail")
     st.caption(
         "SR 11-7 compliant record of all agent "
         "interactions in this session."
@@ -103,7 +108,11 @@ def render_audit_trail(
                     entry["current_agent"],
                 )
             st.write(
-                "**Agents executed:**",
+                "**Agents participating:**",
+                entry.get("unique_agents", []),
+            )
+            st.write(
+                "**Full execution sequence:**",
                 entry["executed_agents"],
             )
             st.json(entry)

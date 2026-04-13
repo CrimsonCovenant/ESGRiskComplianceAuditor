@@ -194,13 +194,30 @@ def _advisor_node(
 
     response = advisor_model.invoke(messages)
 
+    # Determine which sub-agents were delegated to this
+    # pass by inspecting tool_calls on the response. This
+    # ensures the audit trail reflects all three agents
+    # when they contribute, satisfying SR 11-7 traceability.
+    sub_agents_called: list[str] = []
+    if (
+        hasattr(response, "tool_calls")
+        and response.tool_calls
+    ):
+        for tc in response.tool_calls:
+            if tc["name"] == "consult_analyst":
+                sub_agents_called.append("analyst")
+            elif tc["name"] == "get_client_profile":
+                sub_agents_called.append("client")
+
     return {
         "messages": [response],
         "current_agent": "advisor",
         "state_version": state["state_version"] + 1,
         "created_by": "advisor",
         "executed_agents": (
-            state["executed_agents"] + ["advisor"]
+            state["executed_agents"]
+            + ["advisor"]
+            + sub_agents_called
         ),
         "iteration_count": current_iter + 1,
     }

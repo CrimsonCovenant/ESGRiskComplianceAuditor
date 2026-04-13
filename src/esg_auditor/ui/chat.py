@@ -125,13 +125,24 @@ def render_chat() -> None:
             with st.expander(
                 "🔍 Agent trace", expanded=False
             ):
+                executed = result.get(
+                    "executed_agents", []
+                )
+                unique = list(
+                    dict.fromkeys(executed)
+                )
+
                 st.write(
                     "**State version:**",
                     result.get("state_version", 0),
                 )
                 st.write(
-                    "**Agents executed:**",
-                    result.get("executed_agents", []),
+                    "**Agents participating:**",
+                    unique,
+                )
+                st.write(
+                    "**Full execution sequence:**",
+                    executed,
                 )
                 st.write(
                     "**Iterations:**",
