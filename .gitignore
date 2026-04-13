@@ -25,3 +25,7 @@ Makefile
 
 SKILLS
 CONTEXT
+
+# Notebooks
+notebooks/.ipynb_checkpoints/
+notebooks/figures/*.png
