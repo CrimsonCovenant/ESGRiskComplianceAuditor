@@ -11,8 +11,6 @@ from __future__ import annotations
 
 from unittest.mock import MagicMock, patch
 
-import pytest
-
 from esg_auditor.eval.finbert_eval import (
     LABEL_MAP,
     evaluate_finbert_accuracy,

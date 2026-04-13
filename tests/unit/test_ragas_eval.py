@@ -15,7 +15,6 @@ import pytest
 from esg_auditor.core.exceptions import StructuredOutputError
 from esg_auditor.eval.ragas_eval import run_evaluation
 
-
 VALID_EVAL_DATA: dict[str, list] = {
     "question": ["What is SR 11-7?"],
     "answer": [

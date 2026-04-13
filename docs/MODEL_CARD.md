@@ -57,10 +57,10 @@ sentiment analysis into a structured advisory output.
 ### Real-Time Data APIs
 | Source | Purpose | Status |
 |---|---|---|
-| Marketaux | ESG news headlines and sentiment | ✅ Active |
-| Finnhub | ESG scores, company profile | ⚠️ Free tier returns 401 on ESG endpoint — premium key required |
-| yfinance | Sustainability scores, financial data | ✅ Active (staleness caveat — see §6) |
-| SEC EDGAR | 10-K/10-Q filing retrieval | ✅ Active |
+| Marketaux | ESG news headlines and sentiment | Active |
+| Finnhub | ESG scores, company profile | Limited — Free tier returns 401 on ESG endpoint; premium key required |
+| yfinance | Sustainability scores, financial data | Active (staleness caveat — see §6) |
+| SEC EDGAR | 10-K/10-Q filing retrieval | Active |
 
 ---
 
@@ -204,13 +204,13 @@ Pillar 3 (Governance) traceability requirements:
 
 | Requirement | Framework | Status | Evidence |
 |---|---|---|---|
-| Model documentation | SR 11-7 § III.A | ✅ Complete | This MODEL_CARD.md |
-| Independent validation | SR 11-7 § III.B | ⏳ Scheduled | RAGAS pipeline built, baseline pending |
-| Governance and controls | SR 11-7 § III.C | ✅ Complete | Audit Trail page, LangSmith traces |
-| Fiduciary duty | SEC Reg BI | ✅ Enforced | Advisory-only mode in all prompts |
-| Suitability | FINRA 2111 | ✅ Active | Client agent generates risk profile |
-| KYC | FINRA 2090 | ✅ Active | Client agent intake |
-| Communication logging | FINRA/SEC 17a-4 | ✅ Active | LangSmith traces + audit_log JSON export |
-| High-risk AI conformity | EU AI Act | ⏳ Pending | Conformity assessment not yet performed |
-| Sustainability reporting | EU CSRD | ✅ Reference | CSRD summary in RAG corpus |
-| Climate disclosure | SEC Climate Rule | ✅ Reference | SEC Climate Rule summary in RAG corpus |
+| Model documentation | SR 11-7 § III.A | Complete | This MODEL_CARD.md |
+| Independent validation | SR 11-7 § III.B | Scheduled | RAGAS pipeline built, baseline pending |
+| Governance and controls | SR 11-7 § III.C | Complete | Audit Trail page, LangSmith traces |
+| Fiduciary duty | SEC Reg BI | Enforced | Advisory-only mode in all prompts |
+| Suitability | FINRA 2111 | Active | Client agent generates risk profile |
+| KYC | FINRA 2090 | Active | Client agent intake |
+| Communication logging | FINRA/SEC 17a-4 | Active | LangSmith traces + audit_log JSON export |
+| High-risk AI conformity | EU AI Act | Pending | Conformity assessment not yet performed |
+| Sustainability reporting | EU CSRD | Reference | CSRD summary in RAG corpus |
+| Climate disclosure | SEC Climate Rule | Reference | SEC Climate Rule summary in RAG corpus |
