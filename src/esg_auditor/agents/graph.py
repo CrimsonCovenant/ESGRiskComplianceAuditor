@@ -54,38 +54,49 @@ def _get_advisor_tools(settings: Settings) -> list:
     def consult_analyst(research_query: str) -> str:
         """Delegate ESG research to the Analyst agent.
 
-        The Analyst has access to: Marketaux news sentiment,
-        SEC EDGAR filings, Finnhub ESG scores, yfinance
-        sustainability data, FinBERT NLP classification,
-        and the regulatory knowledge base. Always call this
-        before forming an ESG opinion.
+        The Analyst runs six tools: Finnhub/yfinance ESG
+        scores, Marketaux news sentiment, FinBERT NLP
+        classification, SEC EDGAR filings, and Qdrant
+        regulatory knowledge base. Always call this tool
+        for every ESG audit request — never answer from
+        your own knowledge.
 
         Args:
-            research_query: Specific research question.
+            research_query: Specific research question
+                including company name, ticker, and ESG
+                dimensions to investigate.
 
         Returns:
-            Analyst's findings as a formatted string.
+            Formatted analyst findings with source
+            citations.
         """
-        return run_analyst(research_query, settings)
+        result = run_analyst(research_query, settings)
+        return f"[ANALYST AGENT RESULT]\n{result}"
 
     @tool_decorator
     def get_client_profile(
         client_description: str,
     ) -> str:
-        """Generate a structured investor profile.
+        """Generate a structured investor profile via the Client agent.
 
-        Returns age, risk tolerance, total assets, current
-        holdings, and investment horizon as a JSON string.
+        Must be called before any ESG suitability
+        assessment. The Client agent produces a validated
+        ClientProfile including risk tolerance, assets,
+        holdings, investment horizon, and ESG preference.
 
         Args:
-            client_description: Description of the client.
+            client_description: Context about the client
+                or their query. If unknown, pass a default
+                institutional investor description.
 
         Returns:
-            ClientProfile JSON string.
+            JSON-formatted ClientProfile with suitability
+            parameters.
         """
-        return generate_client_profile(
+        result = generate_client_profile(
             client_description, settings
         )
+        return f"[CLIENT AGENT RESULT]\n{result}"
 
     return [consult_analyst, get_client_profile]
 
@@ -147,10 +158,10 @@ def _advisor_node(
             "messages": [
                 AIMessage(
                     content=(
-                        "Maximum iteration limit reached. "
-                        "Returning the analysis collected "
-                        "so far. Please review the findings "
-                        "above for completeness."
+                        "Maximum analysis iterations "
+                        "reached. Please review partial "
+                        "results above. Human review "
+                        "recommended before any action."
                     )
                 )
             ],
@@ -163,8 +174,21 @@ def _advisor_node(
             "iteration_count": current_iter + 1,
         }
 
+    # On the first pass, append a compliance reminder
+    # so the LLM calls both tools before answering.
+    system_content = ADVISOR_SYSTEM_PROMPT
+    if current_iter == 0:
+        system_content += (
+            "\n\nREMINDER FOR THIS REQUEST: You have "
+            "just received a new audit request. Before "
+            "writing any response, you must call "
+            "get_client_profile AND consult_analyst. "
+            "Do not write a final response until both "
+            "tools have returned their results."
+        )
+
     messages = [
-        SystemMessage(content=ADVISOR_SYSTEM_PROMPT),
+        SystemMessage(content=system_content),
         *state["messages"],
     ]
 

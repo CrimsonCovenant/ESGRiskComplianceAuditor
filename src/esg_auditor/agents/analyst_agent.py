@@ -18,6 +18,7 @@ from langchain_core.messages import (
     HumanMessage,
     SystemMessage,
 )
+from langgraph.checkpoint.memory import InMemorySaver
 from langgraph.graph import END, START, StateGraph
 from langgraph.graph.message import add_messages
 from langgraph.prebuilt import ToolNode
@@ -146,7 +147,9 @@ def run_analyst(
     )
     workflow.add_edge("tools", "analyst_llm")
 
-    graph = workflow.compile()
+    graph = workflow.compile(
+        checkpointer=InMemorySaver()
+    )
 
     try:
         initial_state: _AnalystState = {
@@ -158,7 +161,20 @@ def run_analyst(
             ]
         }
 
-        result = graph.invoke(initial_state)
+        # Include parent context in thread_id for
+        # LangSmith trace nesting.
+        analyst_thread_id = (
+            f"analyst-{abs(hash(research_query)) % 1_000_000:06d}"
+        )
+
+        result = graph.invoke(
+            initial_state,
+            config={
+                "configurable": {
+                    "thread_id": analyst_thread_id,
+                }
+            },
+        )
         final_message = result["messages"][-1]
 
         if isinstance(final_message, AIMessage):

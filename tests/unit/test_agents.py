@@ -136,7 +136,7 @@ class TestAdvisorNode:
 
         # LLM should NOT have been called
         mock_model.invoke.assert_not_called()
-        assert "iteration limit" in (
+        assert "iterations reached" in (
             result["messages"][0].content.lower()
         )
 
