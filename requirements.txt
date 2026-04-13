@@ -19,3 +19,4 @@ tenacity>=9.0.0
 ratelimit>=2.2.1
 python-dotenv>=1.0.1
 langsmith>=0.3.12
+scikit-learn>=1.4.0
